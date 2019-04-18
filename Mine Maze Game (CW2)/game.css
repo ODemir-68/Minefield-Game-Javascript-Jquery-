@@ -1,0 +1,207 @@
+* {
+	padding:0;
+	margin:0;
+}
+body {
+	font-family: Arial, Verdana, sans-serif;
+	font-style: normal;
+	font-size: 100%;
+}
+#game {
+	position: relative;
+	margin-left: 30px;
+	width: 1080px;
+	height: 450px;
+}
+#game > h1:first-child {
+	display: inline;
+}
+#time, #moves {
+	text-align: center;
+	display: inline-block;
+	width: 370px;
+}
+#instructions {
+	height: 30px;
+	float: right;
+	text-align: right;
+	margin: 0 0 0 auto;
+	vertical-align: middle;
+}
+#board {
+	width: 846px;
+	height: 450px;
+	float: left;
+}
+#controlPanel > h1, #controlPanel > h2, #scores > h2, #controlPanel > p, #controlPanel > h3 {
+	text-align: center;
+}
+#controlPanel > h2 > img, #controlPanel p img {
+	vertical-align: middle;
+	height: 30px;
+}
+#controlPanel {
+	width: 234px;
+	height: 450px;
+	float: left;
+	background-color: lightblue;
+}
+#controlPanel > h1 {
+	background-color: lightgrey;
+}
+#controlPanel > p {
+	margin: 5px 0 0 0;
+}
+#controlPanel > p > a > img {
+	box-shadow: 0 3px 2px #888888;
+}
+#scores {
+	clear: both;
+	width: 846px;
+	margin: 0 30px;
+	background-color: lightblue;
+}
+#scores table {
+	width: 846px;
+}
+#scores table > thead > tr {
+	background-color: blue;
+}
+#scores a:link, #scores a:visited, #scores a:hover, #scores a:active {
+	color: white;
+}
+#detector {
+	width: 150px;
+	margin: 0 auto;
+}
+#detector td {
+	background-color: black;
+	color: white;
+	padding: 5px 0;
+	border: 1px solid red;
+	text-align: center;
+	width: 50px
+}
+#detector img {
+	width: 45px;
+	padding: 0;
+}
+#movement img {
+	height: 30px;
+	margin: 0 7px 5px 7px;
+	box-shadow: 0 3px 2px #888888;
+}
+#movement p {
+	text-align: center;
+}
+.boardCell {
+	padding:0;
+	margin: 0;
+	float: left;
+}
+/* Add your own CSS in the section BELOW */
+.stopGamePlay {
+	z-index: 1; position: absolute;		/*This is the CSS for semit transparent background*/
+	height: 450px;
+	width: 1080px;
+	left: 30px;
+	top: 37px;  
+	background-color: white;
+	opacity: 0.7;
+}
+.diag {
+	z-index: 2; position: absolute;		/*This it he dialog box, where the information is shown*/
+	width: 400px;
+	top: 200px;
+	left: 300px;
+	background-color: darkgrey;
+}
+.dTitle {
+	background-color: black;			/*Dialog box title*/
+	color: white;
+	padding: 5px;
+	font-weight: bold;
+}
+.dInfo {								/*Where the first elemtn box is*/
+	color: black;
+	font-weight: bold;
+	text-align: center;
+	padding: 5px;
+}
+.dInfoP {								
+	display: inline-block;
+	vertical-align: middle;
+}		
+.Hard, .Medium, .Easy {					/*The buttons for each difficulty*/
+	float: right;
+	padding: 10px;
+	margin: 5px;
+}
+.stopGamePlay2 {
+	z-index: 2; position: absolute;		/*This is the CSS for semit transparent background*/
+	height: 450px;
+	width: 234px;
+	left: 877px;
+	top: 37px;  
+	background-color: white;
+	opacity: 0.7;
+}
+.diag2 {
+	z-index: 3; position: absolute;		/*This it he dialog box, where the information is shown*/
+	width: 200px;
+	height: 160px;
+	top: 140px;
+	left: 895px;
+	background-color: darkgrey;
+}
+.Lost, .Winner {						/*Lost and win buttons*/
+	float: right;
+	width: 190px;
+	padding: 10px;
+	margin: 5px;
+}
+.dInfo2 {
+	color: black;
+	font-size: 30px;
+	font-weight: bold;
+	text-align: center;
+	padding: 5px;
+}
+.dInfoP2 {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.diag3 {
+	z-index: 3; position: absolute;		/*This it he dialog box, where the information is shown*/
+	width: 650px;
+	height: 540px;
+	top: 50px;
+	left: 140px;
+	background-color: darkgrey;
+}
+.dInfo3 {
+	color: black;
+	text-align: left;
+	padding: 5px;
+	font-size: 13px;
+}
+.dInfoP3 {
+	display: inline-block;
+	vertical-align: left;
+}
+.Ok {									/*Closes the instructions dialog menu*/
+	float: right;
+	padding: 10px;
+	margin: 5px;
+}
+.stopGamePlay3 {
+	z-index: 2; position: absolute;		/*This is the CSS for semit transparent background*/
+	height: 100%;
+	width: 100%;
+	left: 0px;
+	top: 37px;  
+	background-color: white;
+	opacity: 0.7;
+}
+/* Add your own CSS in the section ABOVE */

@@ -1,0 +1,628 @@
+<!DOCTYPE html> 
+<html>
+	<head>
+		<!-- This is a comment tag -->
+		<meta charset="UTF-8" />
+		<title></title>
+		<link rel="stylesheet" href="game.css" type="text/css" media="screen,projection" />
+		<script type="text/javascript" src="jquery-2.1.3.min.js"></script>
+		<script type="text/javascript">
+		
+		var xmlData = 	"<Scores>" +
+							"<Game><Player>Andy Symons</Player><Time>30</Time><Moves>4</Moves></Game>" +
+							"<Game><Player>Joe Bloggs</Player><Time>35</Time><Moves>4</Moves></Game>" +
+							"<Game><Player>Jane Bloggs</Player><Time>28</Time><Moves>6</Moves></Game>" +
+							"<Game><Player>Jane Bloggs</Player><Time>30</Time><Moves>8</Moves></Game>" +
+							"<Game><Player>Joe Bloggs</Player><Time>55</Time><Moves>6</Moves></Game>" +
+						"</Scores>";
+		
+		var xmlDoc, xml;
+		var easy = 5, medium = 10, difficult = 15;
+		var board;
+		var playerX;
+		var playerY;
+		var playerDead = 0;
+		var cheatMode = 0;
+		var gameTime;
+		var moves;
+		var timer;
+		
+/* Setup your own GLOBAL variables in this section BELOW */
+		
+		var posx, posy;				//
+		var min = 0, max = 8;	 	//Used in the Random mine placing 
+
+/* Setup your own GLOBAL variables in this section ABOVE */
+		
+		function setupBoard()
+		{
+			// Setup player starting pointer...middle of the board
+			playerX = 4;
+			playerY = 4;
+			playerDead = 0;
+			
+			// Setup gameTime and moves
+			gameTime = 0;
+			moves = 0;
+			
+			// Reset cheat mode in case of previous game
+			cheatMode = 0; 
+			
+			// Remove time in case of previous game
+			$('#time').html("");
+			
+			// Setup board array
+			board = [   [ 0,0,0,0,0,0,0,0,0 ], 
+						[ 0,1,1,1,1,1,1,1,0 ],
+						[ 0,1,1,1,1,1,1,1,0 ],
+						[ 0,1,1,1,1,1,1,1,0 ],
+						[ 0,1,1,1,3,1,1,1,0 ],
+						[ 0,1,1,1,1,1,1,1,0 ],
+						[ 0,1,1,1,1,1,1,1,0 ],
+						[ 0,1,1,1,1,1,1,1,0 ],
+						[ 0,0,0,0,0,0,0,0,0 ] ];
+			
+			// Paint the board
+			paintBoard();
+			
+			// Reset mine detector in case of previous game
+			mineDetector();
+			
+			// Ask the user if they wish to start a new game
+			startGameDialog();
+		
+		}
+		
+		function mineDetector()
+		  {
+		   var i, j, k, l;
+		   var cellY, cellX;
+		   var noMines;
+		   
+		   // For each row above, at and below the player row
+		   for(i = -1; i <= 1; i++)
+		   {
+		    // For each column before, at and after the player column
+		    for(j = -1; j <= 1; j++)
+		    {
+		     // Not the player position
+		     if (!((i==0) && (j==0)))
+		     {
+		      // reset noMines to zero
+		      noMines = 0;
+		      
+		      // find out how many mines
+		      // In surrounding rows
+		      var startK = -1, endK = 1, startL = -1, endL = 1;
+		      if (playerY == 1)
+		      {
+		       startK = 0;
+		      }
+		      
+		      if (playerY == 7)
+		      {
+		       endK = 0;
+		      }
+		      
+		      if (playerX == 1)
+		      {
+		       startL = 0;
+		      }
+		      
+		      if (playerX == 7)
+		      {
+		       endL = 0;
+		      }
+		      
+		      for(k = startK; k <= endK; k++)
+		      {
+		       // In surrounding columns
+		       for (l = startL; l <= endL; l++)
+		       {
+		        // Check if that place in the board array is a mine
+		        if (board[playerY + i + k][playerX + j + l] == 2)
+		        {
+		         // It is - add one to number of mines
+		         noMines++
+		        }
+		       }
+		      }
+		      
+		      // Update detector cell
+		      cellY = i + 2;
+		      cellX = j + 2;
+		      $("#detector").find("tr:nth-child(" + cellY + ")").find("td:nth-child(" + cellX + ")").text(noMines);
+		     }
+		    }
+		   }
+		  }
+
+		function paintBoard()
+		{
+			var src, x, y;
+		
+			// Delete existing board
+			$('#board').empty();
+			
+			// Build board in 'board' division
+			for (y = 0; y <= 8; y++)  // For each row
+			{
+				for (x = 0; x <= 8; x++)  // For each column
+				{
+					// Figure out which tile to paint
+					if ((x == playerX) && (y == playerY))
+					{
+						if (playerDead == 1)
+						{
+							src = "explode.png";
+						}
+						else
+						{
+							src = "player.png";
+						}
+					}
+					else if (board[y][x] == 0)
+					{
+						src = "goal.png";
+					}
+					else if (board[y][x] == 1)
+					{
+						src = "minefield.png";
+					}
+					else if (board[y][x] == 2)
+					{
+						if ((playerDead != 0) || (cheatMode == 1))
+						{
+							src = "mine.png";
+						}
+						else
+						{
+							src = "minefield.png";
+						}
+					}
+					else if (board[y][x] == 3)
+					{
+						src = "safe.png";
+					}
+					
+					//alert(src);
+					
+					// create and paint the tile
+					$('#board').append('<img src="' + src + '" alt="Game Board Cell" />');
+				}
+			}
+			$('#board > img').addClass( "boardCell" );
+			
+			$('#moves').html("Moves: " + moves);
+		}
+		
+		function startGameDialog()
+		{
+/* Add your own code BELOW */
+			function startMenu(dTitle, dInfo){
+				$('body').prepend('<div id="diag"><div id="dTitle">' + dTitle + '</div>' + '<div id="dInfo">' +'<p>' +dInfo + '<p></div><div>' +'<button id="Hard">Difficult</button></div>' +'<div>'+'<button id="Medium">Medium</button></div>' +'<div>'+'<button id="Easy">Easy</button></div>' + '</div>');
+
+					$("#stopGamePlay").addClass("stopGamePlay");			//Here I am preappending the dialog box so it is inserted into the html. 
+					$("#diag").addClass("diag");							//Adding the classes 
+					$("#dInfo").addClass("dInfo");				
+					$("#dInfo p").addClass("dInfoP");
+					$("#dTitle").addClass("dTitle");
+					$("#Hard").addClass("Hard");
+					$("#Medium").addClass("Medium");
+					$("#Easy").addClass("Easy");
+
+					$('#Hard').on('click', function()					//These are the listeners for the buttons on the dialog box, one for each difficulty Easy, Medium and Hard
+							{											//When pressed the dialog box is removed and so is the semi transperant background 
+							$("#diag").remove();						//It also calls the startGame function to begin the game and laydown mines according to diffculty 	
+							$("#stopGamePlay").remove();
+							startGame(difficult);
+						})
+					$('#Medium').on('click', function()
+							{
+							$("#diag").remove();
+							$("#stopGamePlay").remove();
+							startGame(medium);
+						})
+					$('#Easy').on('click', function()
+							{
+							$("#diag").remove();
+							$("#stopGamePlay").remove();
+							startGame(easy);
+						})
+			}
+		startMenu("Start New Game?", "Do you want to start a new game?");	//This is what will be in the title and info box when the dialog box comes on 
+		$('body').prepend('<div id="stopGamePlay"></div>');					//Pre appending the Semi transparent background behind the dialog box 
+		$("#stopGamePlay").addClass("stopGamePlay");
+		}
+		
+/* Add your own code ABOVE */
+		
+		function startGame(difficulty)							//Deciding the diffculty 
+		{
+/* Add your own code BELOW */
+		var m = 0;
+			while(m <= difficulty){				//A while statement used for the loop, when "m" less that difficlty it will loop 
+
+				posx = Math.floor(Math.random() *(max-min+1)+min);			//Using math.floor and math.random to come up with a random number 
+				posy = Math.floor(Math.random() *(max-min+1)+min);			//The timsing section is making sure it finds a number between the array numbers of 1 and 8
+				m++
+
+					 if (board[posy][posx] == 0){							//Making sure that no mines placed on the safe zone
+						m--;
+					}
+					else if(board[posy][posx] == 3 ){						//making sure no mines placed on the player starting location 
+						m--;
+					}
+
+					else if (board[posy][posx] == 1){						//Placing the mines 
+						board[posy][posx] = 2;
+					}
+				
+			}
+
+			$('#time').html('Time '+gameTime+ ' secs')						//Adds a timer that updates every second counting how long has been running 
+			timer = setInterval(timedEvent, 1000);							
+
+			function timedEvent(){
+				gameTime++;													//++ the timer every second 	
+				$('#time').html('Time '+gameTime+' secs');
+			}
+/* Add your own code ABOVE */
+		}
+		
+		function move(direction)
+		{
+/* Add your own code BELOW */
+			
+			if (direction == 'up'){										//Using if else staements for directional movement listeners 
+				playerY -= 1;											//PlayerY in the array is being taken away which moves the player upwards 
+				moves++;												//Moves incremented 
+
+				if (board[playerY][playerX] == 1){						//Placing a safe zone if the player moves onto a tile without a mine					
+					board[playerY][playerX] = 3;
+				}
+				else if (board[playerY][playerX] == 2){					//If the players location pm the array is a 2, it changes player dead to 1, stops the timer and calls the endgame dialog of loser 
+					playerDead = 1;
+					clearInterval(timer);
+					endGameDialog('loser');
+				}
+				else if(board[playerY][playerX] == 0 ){					//Checks if the user has arrived on a safe zone, if they have stops the timer and calls the winner dialog 
+					clearInterval(timer);
+					endGameDialog('winner');
+				}
+			}
+
+			else if (direction == 'down'){								//Using if else staements for directional movement listeners 
+				playerY += 1;											//PlayerY in the array is being added which moves the player down 
+				moves++;												//Moves incremented 
+
+				if (board[playerY][playerX] == 1){						//Placing a safe zone if the player moves onto a tile without a mine
+					board[playerY][playerX] = 3;
+				}
+				else if (board[playerY][playerX] == 2){					//If the players location pm the array is a 2, it changes player dead to 1, stops the timer and calls the endgame dialog of loser 	
+					playerDead = 1;
+					clearInterval(timer);
+					endGameDialog('loser');
+				}
+				else if(board[playerY][playerX] == 0){					//Checks if the user has arrived on a safe zone, if they have stops the timer and calls the winner dialog 
+					clearInterval(timer);
+					endGameDialog('winner');
+				}
+			}
+
+			else if (direction == 'left'){								//Using if else staements for directional movement listeners 
+				playerX -= 1;											//PlayerX in the array is being subtracted which moves the player left 
+				moves++;												//Moves incremented 
+
+				if (board[playerY][playerX] == 1){						//Placing a safe zone if the player moves onto a tile without a mine
+					board[playerY][playerX] = 3;
+				}
+				else if (board[playerY][playerX] == 2){					//If the players location pm the array is a 2, it changes player dead to 1, stops the timer and calls the endgame dialog of loser	
+					playerDead = 1;
+					clearInterval(timer);
+					endGameDialog('loser');
+				}
+				else if(board[playerY][playerX] == 0){					//Checks if the user has arrived on a safe zone, if they have stops the timer and calls the winner dialog
+					clearInterval(timer);
+					endGameDialog('winner');
+				}
+			}
+
+			else if (direction == 'right'){								//Using if else staements for directional movement listeners 
+				playerX += 1;											//PlayerX in the array is being added which moves the player right 
+				moves++;												//Moves incremented 
+
+				if (board[playerY][playerX] == 1){						//Placing a safe zone if the player moves onto a tile without a mine
+					board[playerY][playerX] = 3;
+				}
+				else if (board[playerY][playerX] == 2){					//If the players location pm the array is a 2, it changes player dead to 1, stops the timer and calls the endgame dialog of loser
+					playerDead = 1;
+					clearInterval(timer);
+					endGameDialog('loser');
+				}
+				else if(board[playerY][playerX] == 0){					//Checks if the user has arrived on a safe zone, if they have stops the timer and calls the winner dialog
+					clearInterval(timer);
+					endGameDialog('winner');
+				}
+			}
+
+			paintBoard();								//Calling the repaint the board so that the zafe zone previously can be seen 
+/* Add your own code ABOVE */
+		}
+		
+		function endGameDialog(outcome)
+		{
+/* Add your own code BELOW */
+			if(outcome == 'loser'){							//If loser is the outcome from the movement listner it runs this function 
+					function Lost(dTitle, dInfo2){
+				$('body').prepend('<div id="diag2"><div id="dTitle">' + dTitle + '</div>' + '<div id="dInfo2">' +'<p>' +dInfo2 + '<p></div><div>' +'<button id="Lost">Restart</button></div>' +'</div>');
+
+					$("#stopGamePlay2").addClass("stopGamePlay2");	//Pre appending the dialog box over the control panel 
+					$("#diag2").addClass("diag2");					//Adding the classes needed 
+					$("#dInfo2").addClass("dInfo2");
+					$("#dInfo p2").addClass("dInfoP");
+					$("#dTitle").addClass("dTitle");
+					$("#Lost").addClass("Lost");
+
+						$('#Lost').on('click', function()			//Listner for the resart button 
+								{					
+								$("#diag2").remove();				//Removing the dialog box over the control panel
+								$("#stopGamePlay2").remove();		//Removing the semi transparent element 					
+								setupBoard();						//Set up the board for a new game 
+							})
+			}
+			Lost("End Game", "You are dead!");						//Waht the dialog box says 		
+		$('body').prepend('<div id="stopGamePlay2"></div>');		//Pre appending the semi transparent element
+		$("#stopGamePlay2").addClass("stopGamePlay2");
+			}
+
+			else if(outcome == 'winner'){
+				function Winner(dTitle, dInfo2){
+				$('body').prepend('<div id="diag2"><div id="dTitle">' + dTitle + '</div>' + '<div id="dInfo2">' +'<p>' +dInfo2 + '<p><form id="form1" name="Form1"><input  type="text" name="username" id ="name1"/></div><div>' +'<button id="Winner">Restart</button></div>' +'</div>');	//Here there is a form to get the users name for later on 
+
+					$("#stopGamePlay2").addClass("stopGamePlay2");	//Pre appending the dialog box over the control panel 
+					$("#diag2").addClass("diag2");					//Adding the classes needed 
+					$("#dInfo2").addClass("dInfo2");
+					$("#dInfo p2").addClass("dInfoP");
+					$("#form1").addClass("form1");
+					$("#name1").addClass("name1");	
+					$("#dTitle").addClass("dTitle");
+					$("#Winner").addClass("Winner");
+
+						$('#Winner').on('click', function()			//Listner for the resart button 
+								{
+								$("#diag2").remove();				//Removing the dialog box over the control panel
+								$("#stopGamePlay2").remove();		//Removing the semi transparent element 	
+								paintScores();						//Calling the paint scores so they are added to the table
+								setupBoard();						//Set up the board for a new game 
+							})
+			}
+			Winner("End Game", "You Have Won!!");					//Waht the dialog box says 
+		$('body').prepend('<div id="stopGamePlay2"></div>');		//Pre appending the semi transparent element
+		$("#stopGamePlay2").addClass("stopGamePlay2");
+			}
+		
+		
+	
+/* Add your own code ABOVE */
+		}
+		
+		// Sort the Scores table
+		function sortScores(colName)
+		{
+/* Add your own code BELOW */
+			if (colName == 'Moves'){
+				 function sortTable() {
+				 }
+			}
+	
+ 	
+/* Add your own code ABOVE */
+
+			paintScores();
+		}
+				
+		// Display the Scores Table
+		function paintScores()
+		{
+			// Load XML data
+			xmlDoc = $.parseXML( xmlData );
+			$xml = $( xmlDoc );
+			
+			// delete the searchResults table children
+			$('#scores > tbody').empty();
+			
+/* Add your own code BELOW */
+			$("#scores").find('tbody').empty();
+
+
+				var Col0 = document.getElementById("name1");
+			
+				
+
+			//	var Col0 =  $(this).find(':input'); 
+			//	var Col0 = $("#name1").find("input[type='text']").text();			
+			//	var Col0 = $("#dinfo2").find('textarea').text();	
+
+			//	var Col0 = $(this).find('Player').text();
+				var Col1 = gameTime
+				var Col2 = moves;
+				var Col3 = Col2*Col1;
+				
+				$('#scores').find('tbody').append("<tr><td>" + Col0 + "</td><td>" + Col1 + "</td><td>" + Col2 + "</td><td>" + Col3 + "</td></tr>");	
+				
+			
+				
+				
+			$xml.find("Game").each (function(){
+			
+				
+				
+				var Col0 = $(this).find('Player').text();
+				var Col4 = $(this).find('Time').text();
+				var Col5 = $(this).find('Moves').text();
+				var Col6 = Col5*Col4;
+				$("#scores").find('tbody').append("<tr><td>" + Col0 + "</td><td>" + Col4 + "</td><td>" + Col5 + "</td><td>" + Col6 + "</td></tr>");
+			
+			})
+			
+			$("#scores").find('tbody')
+				.find('tr:odd').css("background-color","#6666ff")
+				.end()
+				.find('tr:even').css("background-color", "#b2b2ff");
+				
+/* Add your own code ABOVE */
+		}
+		
+/* Add your own functions in the section BELOW */
+	function Instructions(){
+		function Instructions1(dTitle, dInfo3){
+				$('body').prepend('<div id="diag3"><div id="dTitle">'+ dTitle+'</div>' + '<div id="dInfo3">' +'<p> What I have attempted'+ 
+					'<br><br> 1. Start up dialog <br>I have created the startup menu, It covers the required compenents with a semi transparent white background. There are 3 options Easy, Medium and Hard and when pressed if will place the neccessary mines down.'+
+					'<br><br> 2. Start Game <br>Here I place down the mines required for each difficutly. unfortuantly there is a problem where it might be off by 1 or 2 when placing mines, i assume this is somemines being placed on top of eachother. I have made sure that no mines are placed in the "Safe" zone or where the player starts. I have also added in the Game timer. It updates every second and updates on the screen as well, showing how long it has been.'+
+					'<br><br> 3. User Movement <br>I have added four listners to make sure all buttons work eveytime they move. The mine Detector also gets updated everytime they take a move. Everytime the player moves there is an if statement to check if the player has steped on a mine, and if not it places down a safezone behind them.'+
+					'<br><br> 4. End game dialog <br>I have added in win or loose states. This is called from the movements section if they step on a mine or reach a safe zone. A dialog window comes up over the control panel when they win or loose. When lost the ok button restarts. When they win the player is asked for their name /FILL IN/.  '+
+					'<br><br> 5. Paint table <br>Here I paint the table already provided. When the user has finished a game and they win thier details are also added into the table. I have also made sure there is a two colour combination so the table is easier to read. <br><br>'+
+					'Not attempted <br><br>'+
+					'1. Sorting <br><br>'+
+					'<p></div><div>' +'<button id="Ok">Ok</button></div>'+ '</div>');
+
+				$("#stopGamePlay3").addClass("stopGamePlay3");
+				$("#diag3").addClass("diag3");
+				$("#dInfo3").addClass("dInfo3");
+				$("#dInfo p3").addClass("dInfoP3");
+				$("#dTitle").addClass("dTitle");
+				$("#Ok").addClass("Ok");
+					$('#Ok').on('click', function()
+							{
+							$("#diag3").remove();
+							$("#stopGamePlay3").remove();
+							setupBoard();
+						})
+			}
+		Instructions1("Information", "");
+		$('body').prepend('<div id="stopGamePlay3"></div>');
+		$("#stopGamePlay3").addClass("stopGamePlay3");
+		
+}
+/* Add your own functions in the section ABOVE */
+		
+		$( document ).ready(function() {
+		
+			// Setup cheat mode button
+			$('#cheat').on('click', function(e){
+				e.preventDefault();
+				if (cheatMode == 0)
+				{
+					$('#cheat > img').attr("src", "on.png");
+					cheatMode = 1;
+				}
+				else
+				{
+					$('#cheat > img').attr("src", "off.png");
+					cheatMode = 0;
+				}
+				paintBoard();
+			});
+			
+			// Setup table column sorting links
+			$('#sortPlayer').on('click', function(e){
+				e.preventDefault();
+				sortScores("Player");
+			});
+			
+			$('#sortTime').on('click', function(e){
+				e.preventDefault();
+				sortScores("Time");
+			});
+			
+			$('#sortMoves').on('click', function(e){
+				e.preventDefault();
+				sortScores("Moves");
+			});
+			
+			$('#sortScore').on('click', function(e){
+				e.preventDefault();
+				sortScores("Score");
+			});
+			
+/* Add the MOVEMENT handlers BELOW */
+			$('#up').on('click', function(e){
+				e.preventDefault();
+				mineDetector();
+				move('up')
+			});
+			$('#down').on('click', function(e){
+				e.preventDefault();
+				mineDetector();
+				move('down')
+			});
+			$('#left').on('click', function(e){
+				e.preventDefault();
+				mineDetector();
+				move('left')
+			});
+			$('#right').on('click', function(e){
+				e.preventDefault();
+				mineDetector();
+				move('right')
+
+			});
+			$('#instructions').on('click', function(e){
+				e.preventDefault();
+				$("#diag").remove();
+				$("#stopGamePlay").remove();
+				Instructions();
+			});
+/* Add the MOVEMENT handlers ABOVE */
+			
+			paintScores();
+
+			setupBoard();
+
+		});
+
+		</script>
+	</head>
+	<body>
+		<div id="game">
+			<h1>MineField !!!</h1><h1 id="time"></h1><h1 id="moves"></h1><a id="instructions" href="#"><img src="instructions.png" alt="Instructions button" /></a>
+			<div id="board"></div>
+			<div id="controlPanel">
+				<h1>Control Panel</h1>
+				<hr /><br />
+				<h2>Player = <img src="player.png" alt="Player Cell" /></h2>
+				<br /><hr /><br />
+				<h3>Mine Detector</h3>
+				<table id="detector">
+					<tr><td>0</td><td>0</td><td>0</td></tr>
+					<tr><td>0</td><td><img src="player.png" alt="Detector Player" /></td><td>0</td></tr>
+					<tr><td>0</td><td>0</td><td>0</td></tr>
+				</table>
+				<br /><hr /><br />
+				<h3>Movement</h3>
+				<div id="movement">
+					<p><a id="up" href="#"><img src="up.png" alt="Up button" /></a></p>
+					<p><a id="left" href="#"><img src="left.png" alt="Left button" /></a><a id="down" href="#"><img src="down.png" alt="Down button" /></a><a id="right" href="#"><img src="right.png" alt="Right button" /></a></p>
+				</div>
+				<br /><hr />
+				<p>Cheat Mode is <a id="cheat" href="#"><img src="off.png" alt="Cheat Mode" /></a></p>
+			</div>
+		</div>
+		<div id="scores">
+			<h2>Scores - Lowest Score Is The Winner</h2>
+			<table>
+				<thead>
+					<tr>
+						<th><a id="sortPlayer" href="#">Player</a></th>
+						<th><a id="sortTime" href="#">Time</a></th>
+						<th><a id="sortMoves" href="#">Moves</a></th>
+						<th><a id="sortScore" href="#">Score</a></th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
+	</body>
+</html>
